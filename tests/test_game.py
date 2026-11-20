@@ -1,26 +1,26 @@
-from game import spawn_food, GRID_WIDTH, GRID_HEIGHT
+from snake_env import SnakeEnv
 
 
 def test_food_does_not_spawn_on_snake():
-    snake = [
+    env = SnakeEnv(seed=42)
+
+    env.snake = [
         (x, y)
-        for y in range(GRID_HEIGHT)
-        for x in range(GRID_WIDTH)
+        for y in range(env.height)
+        for x in range(env.width)
         if (x, y) != (0, 0)
     ]
 
-    food = spawn_food(snake)
-
-    assert food == (0, 0)
+    assert env._spawn_food() == (0, 0)
 
 
 def test_no_food_when_board_is_full():
-    snake = [
+    env = SnakeEnv(seed=42)
+
+    env.snake = [
         (x, y)
-        for y in range(GRID_HEIGHT)
-        for x in range(GRID_WIDTH)
+        for y in range(env.height)
+        for x in range(env.width)
     ]
 
-    food = spawn_food(snake)
-
-    assert food is None
+    assert env._spawn_food() is None

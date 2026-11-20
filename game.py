@@ -1,72 +1,90 @@
 import random
 import pygame
 
+from snake_env import SnakeEnv
+
+
 # Game configuration
 CELL_SIZE = 25
 GRID_WIDTH = 20
 GRID_HEIGHT = 20
 
-WIDTH = CELL_SIZE * GRID_WIDTH
-HEIGHT = CELL_SIZE * GRID_HEIGHT
+BOARD_WIDTH = CELL_SIZE * GRID_WIDTH
+BOARD_HEIGHT = CELL_SIZE * GRID_HEIGHT
+
+PANEL_WIDTH = 260
+
+WIDTH = BOARD_WIDTH + PANEL_WIDTH
+HEIGHT = BOARD_HEIGHT
 
 # Colors
 BLACK = (20, 20, 20)
 GREEN = (0, 255, 100)
 RED = (255, 70, 70)
 WHITE = (255, 255, 255)
+GRAY = (150, 150, 150)
+PANEL_BG = (30, 32, 45)
 
-# Directions
-RIGHT = (1, 0)
-LEFT = (-1, 0)
-UP = (0, -1)
-DOWN = (0, 1)
-
-# Snake movement event
 MOVE_EVENT = pygame.USEREVENT + 1
 
 
-def spawn_food(snake):
-    """Spawn food randomly in an unoccupied cell."""
+def arrow_to_action(env, key):
+    """Convert an arrow key into a relative movement action."""
 
-    occupied = set(snake)
+    keys = {
+        pygame.K_RIGHT: (1, 0),
+        pygame.K_DOWN: (0, 1),
+        pygame.K_LEFT: (-1, 0),
+        pygame.K_UP: (0, -1),
+    }
 
-    available = [
-        (x, y)
-        for y in range(GRID_HEIGHT)
-        for x in range(GRID_WIDTH)
-        if (x, y) not in occupied
-    ]
+    desired_direction = keys.get(key)
 
-    if not available:
+    if desired_direction is None:
         return None
 
-    return random.choice(available)
+    desired_index = env.DIRECTIONS.index(desired_direction)
+
+    turn = (desired_index - env.direction_index) % 4
+
+    # 0 = straight, 1 = right, 2 = left
+    actions = {
+        0: 0,
+        1: 1,
+        3: 2,
+    }
+
+    return actions.get(turn)
 
 
 def main():
     pygame.init()
 
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
-    pygame.display.set_caption("AI Snake")
+    pygame.display.set_caption("AI Snake Training Lab")
 
     clock = pygame.time.Clock()
-    font = pygame.font.SysFont(None, 36)
 
-    # Starting snake
-    snake = [(10, 10), (9, 10), (8, 10)]
+    title_font = pygame.font.SysFont(None, 32)
+    font = pygame.font.SysFont(None, 25)
 
-    direction = RIGHT
-    next_direction = RIGHT
+    # Create our game environment
+    env = SnakeEnv(
+        width=GRID_WIDTH,
+        height=GRID_HEIGHT,
+    )
 
-    # Food and scoring
-    food = spawn_food(snake)
-    score = 0
+    rng = random.Random()
 
-    game_over = False
-    won = False
+    mode = "HUMAN"
+
+    pending_action = 0
+    episodes = 0
+    best_score = 0
+    last_reward = 0.0
+
     running = True
 
-    # Move every 150 milliseconds
     pygame.time.set_timer(MOVE_EVENT, 150)
 
     while running:
@@ -77,89 +95,68 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
 
-            # Keyboard controls
             elif event.type == pygame.KEYDOWN:
 
-                # Restart game
-                if game_over and event.key == pygame.K_r:
-                    snake = [(10, 10), (9, 10), (8, 10)]
-                    direction = RIGHT
-                    next_direction = RIGHT
+                # Human mode
+                if event.key == pygame.K_h:
+                    mode = "HUMAN"
+                    env.reset()
+                    pending_action = 0
+                    episodes = 0
 
-                    food = spawn_food(snake)
-                    score = 0
+                # Random AI mode
+                elif event.key == pygame.K_a:
+                    mode = "RANDOM AI"
+                    env.reset()
+                    pending_action = 0
+                    episodes = 0
 
-                    game_over = False
-                    won = False
+                # Restart
+                elif event.key == pygame.K_r:
+                    env.reset()
+                    pending_action = 0
 
-                elif not game_over:
-                    keys = {
-                        pygame.K_UP: UP,
-                        pygame.K_DOWN: DOWN,
-                        pygame.K_LEFT: LEFT,
-                        pygame.K_RIGHT: RIGHT,
-                    }
+                # Human controls
+                elif mode == "HUMAN" and not env.done:
 
-                    requested = keys.get(event.key)
+                    action = arrow_to_action(env, event.key)
 
-                    if requested is not None:
-                        opposite = (-direction[0], -direction[1])
+                    if action is not None:
+                        pending_action = action
 
-                        # Prevent reversing directly into the body
-                        if requested != opposite:
-                            next_direction = requested
+            # Advance game
+            elif event.type == MOVE_EVENT:
 
-            # Move the snake
-            elif event.type == MOVE_EVENT and not game_over:
+                if mode == "RANDOM AI":
 
-                direction = next_direction
-
-                head_x, head_y = snake[0]
-
-                new_head = (
-                    head_x + direction[0],
-                    head_y + direction[1],
-                )
-
-                # Wall collision
-                hit_wall = (
-                    new_head[0] < 0
-                    or new_head[0] >= GRID_WIDTH
-                    or new_head[1] < 0
-                    or new_head[1] >= GRID_HEIGHT
-                )
-
-                # Body collision
-                hit_body = new_head in snake[:-1]
-
-                if hit_wall or hit_body:
-                    game_over = True
-
-                else:
-                    # Move head forward
-                    snake.insert(0, new_head)
-
-                    # Check whether snake ate food
-                    if new_head == food:
-                        score += 1
-
-                        # Spawn new food
-                        food = spawn_food(snake)
-
-                        # Win if the board is full
-                        if food is None:
-                            game_over = True
-                            won = True
+                    # Automatically restart after death
+                    if env.done:
+                        episodes += 1
+                        env.reset()
 
                     else:
-                        # Remove tail if no food was eaten
-                        snake.pop()
+                        action = rng.randrange(3)
+
+                        state, reward, done = env.step(action)
+
+                        last_reward = reward
+
+                elif not env.done:
+
+                    state, reward, done = env.step(
+                        pending_action
+                    )
+
+                    last_reward = reward
+                    pending_action = 0
+
+                best_score = max(best_score, env.score)
 
         # Clear screen
         screen.fill(BLACK)
 
         # Draw snake
-        for x, y in snake:
+        for x, y in env.snake:
             pygame.draw.rect(
                 screen,
                 GREEN,
@@ -172,47 +169,87 @@ def main():
             )
 
         # Draw food
-        if food is not None:
+        if env.food is not None:
             pygame.draw.rect(
                 screen,
                 RED,
                 (
-                    food[0] * CELL_SIZE,
-                    food[1] * CELL_SIZE,
+                    env.food[0] * CELL_SIZE,
+                    env.food[1] * CELL_SIZE,
                     CELL_SIZE - 1,
                     CELL_SIZE - 1,
                 ),
             )
 
-        # Draw score
-        score_text = font.render(
-            f"Score: {score}",
-            True,
-            WHITE,
+        # Draw dashboard panel
+        pygame.draw.rect(
+            screen,
+            PANEL_BG,
+            (BOARD_WIDTH, 0, PANEL_WIDTH, HEIGHT),
         )
 
-        screen.blit(score_text, (10, 10))
+        panel_x = BOARD_WIDTH + 20
 
-        # Game over message
-        if game_over:
+        # Title
+        title = title_font.render(
+            "AI SNAKE LAB",
+            True,
+            GREEN,
+        )
 
-            message = "You Win! Press R" if won else "Game Over - Press R"
+        screen.blit(title, (panel_x, 25))
 
-            text = font.render(
-                message,
+        # Dashboard information
+        stats = [
+            f"Mode: {mode}",
+            "",
+            f"Score: {env.score}",
+            f"Best Score: {best_score}",
+            f"Episodes: {episodes}",
+            "",
+            f"Last Reward: {last_reward:.2f}",
+            "",
+            "Neural Network:",
+            "Not connected yet",
+            "",
+            "CONTROLS",
+            "H - Human Mode",
+            "A - Random AI",
+            "R - Restart",
+            "Arrows - Movement",
+        ]
+
+        y = 90
+
+        for line in stats:
+            text = font.render(line, True, WHITE)
+
+            screen.blit(text, (panel_x, y))
+
+            y += 25
+
+        # Display game over
+        if env.done and mode == "HUMAN":
+
+            message = font.render(
+                "Game Over - Press R",
                 True,
                 WHITE,
             )
 
-            rect = text.get_rect(
-                center=(WIDTH // 2, HEIGHT // 2 - 60)
+            rect = message.get_rect(
+                center=(
+                    BOARD_WIDTH // 2,
+                    BOARD_HEIGHT // 2,
+                )
             )
 
-            screen.blit(text, rect)
+            screen.blit(message, rect)
 
         pygame.display.flip()
         clock.tick(60)
 
+    pygame.time.set_timer(MOVE_EVENT, 0)
     pygame.quit()
 
 
