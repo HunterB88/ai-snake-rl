@@ -2,7 +2,7 @@
 
 **A neural network learns to play Snake by trial and error.** Watch its decisions in real time, then open an interactive map of all **270 neurons** and **18,176 learned connections**.
 
-![AI Snake gameplay followed by the full live neural network visualization](assets/demo.gif)
+![Snake AI plays, opens the full neural network, and inspects individual neurons and their connections](assets/demo.gif)
 
 Built in Python with **PyTorch** and **Pygame**. The AI is a custom Deep Q-Network (DQN), not a rule-based pathfinding bot. A trained checkpoint is included, so you can try the demo immediately without waiting for training.
 
@@ -89,7 +89,15 @@ Each policy was evaluated on **100 games**, starting at seed `2026`. Score means
 
 The trained model scored an average of **28.25 more food items per game** than random in this evaluation. Results are specific to these 100 environment seeds; use the command above to reproduce the comparison.
 
-For context, the earlier 500-episode *training* run reported a **12.06 average score over its final 50 episodes** and a **best training score of 31**. Training scores and independent evaluation scores measure different conditions and should not be conflated.
+## Training progress and compute
+
+The original DQN trained for **500 episodes** on a **MacBook Pro with an Apple M3 Pro chip**, using **CPU execution with one PyTorch CPU thread** (`torch.set_num_threads(1)` in `train.py`). The original run did not record wall-clock training duration, so no runtime estimate is claimed here.
+
+![Training score and exploration rate across 500 episodes](assets/training_progress.png)
+
+The plot shows individual game scores, a rolling average over the last 50 episodes, and the programmed exploration-rate decay. The final rolling average was **12.06 food per game**, and the best training episode scored **31**. This upward trend is evidence of improvement during training, while the separate 100-game evaluation above measures the trained greedy policy.
+
+Training scores and independent evaluation scores measure different conditions and should not be conflated.
 
 ## Tests and development
 
@@ -123,3 +131,9 @@ tests/                Automated regression tests
 - The explorer shows all learned weights, but only the strongest weighted contributions are emphasized to keep a dense 18,176-edge graph readable.
 
 This project focuses on an end-to-end reinforcement-learning system that can be trained, evaluated, inspected, and demonstrated locally.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+
+Copyright (c) 2026 Hunter Bishop.
