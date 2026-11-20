@@ -1,16 +1,25 @@
-# Python environment
+# Local environments and secrets
 .venv/
+venv/
+.env
+.env.*
 
-# Python cache
+# Python and test caches
 __pycache__/
-*.pyc
-
-# Testing
+*.py[cod]
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 
-# macOS
+# Editors and OS files
 .DS_Store
+.idea/
+.vscode/
 
-# Training outputs
-models/
+# Locally generated checkpoints and training/evaluation logs
+training_output/
 runs/
+models/*
+!models/snake_dqn.pt

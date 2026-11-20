@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="205" viewBox="0 0 1000 205" role="img" aria-label="Snake DQN architecture: 11 inputs, 128 hidden units, 128 hidden units, three action values">
+  <defs>
+    <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#101d2b"/><stop offset="1" stop-color="#17293a"/></linearGradient>
+  </defs>
+  <rect width="1000" height="205" rx="19" fill="url(#bg)"/>
+  <g stroke="#345367" stroke-width="2" stroke-dasharray="4,7" opacity=".8">
+    <path d="M175 102H316M435 102H562M683 102H805"/>
+  </g>
+  <g font-family="Arial, Helvetica, sans-serif" text-anchor="middle">
+    <text x="112" y="38" font-size="15" font-weight="700" fill="#adcad7">INPUTS</text>
+    <text x="375" y="38" font-size="15" font-weight="700" fill="#adcad7">HIDDEN 1</text>
+    <text x="625" y="38" font-size="15" font-weight="700" fill="#adcad7">HIDDEN 2</text>
+    <text x="877" y="38" font-size="15" font-weight="700" fill="#adcad7">ACTIONS</text>
+    <g fill="#173e3c" stroke="#15e7a4" stroke-width="2.5"><circle cx="112" cy="100" r="46"/><circle cx="375" cy="100" r="46"/><circle cx="625" cy="100" r="46"/></g>
+    <circle cx="877" cy="100" r="46" fill="#173346" stroke="#28c5e2" stroke-width="2.5"/>
+    <g fill="#f0fbff" font-size="30" font-weight="700"><text x="112" y="111">11</text><text x="375" y="111">128</text><text x="625" y="111">128</text><text x="877" y="111">3</text></g>
+    <g fill="#9ebcca" font-size="13"><text x="112" y="172">Game state</text><text x="375" y="172">ReLU</text><text x="625" y="172">ReLU</text><text x="877" y="172">Q-values</text></g>
+  </g>
+</svg>
